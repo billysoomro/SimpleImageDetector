@@ -1,0 +1,109 @@
+﻿@model SimpleImageDetector.Models.ImageUploadViewModel;
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container">
+    <div class="row">
+        <!-- Left Section: Dropzone for Image Upload -->
+        <div class="col-md-4">
+            <h3>Select Image</h3>
+            <div class="dropzone" id="dropzone">
+                <form enctype="multipart/form-data" asp-controller="Image" asp-action="UploadImage" method="post">
+                    <input type="file" name="imageFile" id="imageFile" accept="image/*" onchange="loadImagePreview(this);" style="display: none;" />
+                    <div id="dropzone-text">Drag and drop an image here or click to select</div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Combined Section: Image and Detected Labels -->
+        <div class="col-md-8" id="image-and-labels-section">
+            @await Html.PartialAsync("_ImageAndLabelsPartial", Model)
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle drag and drop events
+    var dropzone = document.getElementById('dropzone');
+    var fileInput = document.getElementById('imageFile');
+
+    dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropzone.style.borderColor = '#0000FF';
+    });
+
+    dropzone.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        dropzone.style.borderColor = '#cccccc';
+    });
+
+    dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.style.borderColor = '#cccccc';
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            loadImagePreview(fileInput);
+        }
+    });
+
+    dropzone.addEventListener('click', function () {
+        fileInput.click();
+    });
+
+    function loadImagePreview(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var imageBase64 = e.target.result.split(',')[1];
+                var form = input.form;
+
+                // Get anti-forgery token from the form
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                // Create FormData to submit via AJAX
+                var formData = new FormData(form);
+                formData.append("ImageBase64", imageBase64);
+                formData.append("__RequestVerificationToken", token);
+
+                // Perform AJAX call to upload the image
+                fetch('@Url.Action("UploadImage", "Image")', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        // Directly replace the HTML content of the section with the returned partial view
+                        document.getElementById('image-and-labels-section').innerHTML = data;
+                    })
+                    .catch(error => console.error('Error:', error));
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+</script>
+
+<style>
+    .dropzone {
+        border: 2px dashed #cccccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .dropzone:hover {
+            border-color: #0000FF;
+        }
+
+        .dropzone h3 {
+            color: #888;
+        }
+</style>
