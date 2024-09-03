@@ -1,5 +1,8 @@
 ﻿using Amazon;
 using Amazon.Rekognition;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SimpleImageDetector
 {
@@ -20,6 +23,20 @@ namespace SimpleImageDetector
             var client = new AmazonRekognitionClient(RegionEndpoint.EUWest2);
 
             services.AddSingleton<IAmazonRekognition>(client);
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+            })
+            .AddCookie()
+            .AddOpenIdConnect(options =>
+            {
+                options.ResponseType = Configuration["Authentication:Cognito:ResponseType"];
+                options.MetadataAddress = Environment.GetEnvironmentVariable("META_DATA_ADDRESS");
+                options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID");                
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,6 +54,7 @@ namespace SimpleImageDetector
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

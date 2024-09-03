@@ -3,4 +3,7 @@
 }
 <h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<h3>Image Handling</h3>
+<p>Images uploaded to AWS Rekognition are processed temporarily and solely for label detection purposes. By default, AWS Rekognition does not store images. The images are handled only for the specific analysis task and then discarded. However, AWS retains logs and metrics for API calls made to the service, which may include metadata related to the image (such as size and format) but not the actual image data itself.</p>
+
+<p>For storing images, they must be saved separately in a service like Amazon S3. In such cases, managing and securing the images within S3 becomes the user's responsibility. More detailed information can be found in AWS's documentation and data privacy policies concerning Rekognition.</p>
